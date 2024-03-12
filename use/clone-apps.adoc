@@ -1,0 +1,94 @@
+---
+sidebar: sidebar 
+permalink: use/clone-apps.html 
+keywords: clone app, clone storage, clone persistent storage, clone data, move workload, clone data, migrate data, data migration, move storage, move application, move data 
+summary: 克隆现有应用程序以在同一个 Kubernetes 集群或另一个集群上创建重复的应用程序。如果您需要将应用程序和存储从一个 Kubernetes 集群移动到另一个集群，则克隆可以助您一臂之力。例如，您可能希望通过 CI CD 管道和 Kubernetes 命名空间移动工作负载。 
+---
+= 克隆和迁移应用程序
+:hardbreaks:
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/use/
+
+
+[role="lead"]
+您可以克隆现有应用程序、以便在同一个Kubernetes集群或另一个集群上创建重复的应用程序。当 Astra Control 克隆应用程序时，它会为您的应用程序配置和永久性存储创建一个克隆。
+
+如果您需要将应用程序和存储从一个 Kubernetes 集群移动到另一个集群，则克隆可以助您一臂之力。例如，您可能希望通过 CI/CD 管道以及在 Kubernetes 命名空间之间移动工作负载。您可以使用Astra控制中心UI或 https://docs.netapp.com/us-en/astra-automation["Astra Control API"^] 克隆和迁移应用程序。
+
+.开始之前
+* *检查目标卷*：如果克隆到其他存储类、请确保该存储类使用相同的永久性卷访问模式(例如ReadWriteMany)。如果目标永久性卷访问模式不同、则克隆操作将失败。例如、如果源永久性卷使用rwx访问模式、请选择无法提供rwx的目标存储类、例如Azure托管磁盘、AWS EBS、Google持久磁盘或 `ontap-san`，发生原因将使克隆操作失败。有关永久性卷访问模式的详细信息、请参阅 https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes["Kubernetes"^] 文档。
+* 要将应用程序克隆到其他集群、您需要确保包含源集群和目标集群(如果不相同)的云实例具有默认分段。您需要为每个云实例分配一个默认分段。
+* 在克隆操作期间、需要IngressClass资源或webhooks才能正常运行的应用程序不能在目标集群上定义这些资源。
+
+
+[NOTE]
+====
+在 OpenShift 环境中克隆应用程序期间， Astra Control Center 需要允许 OpenShift 挂载卷并更改文件所有权。因此，您需要配置 ONTAP 卷导出策略以允许执行这些操作。您可以使用以下命令执行此操作：
+
+. `export-policy rule modify -vserver <storage virtual machine name> -policyname <policy name> -ruleindex 1 -superuser sys`
+. `export-policy rule modify -vserver <storage virtual machine name> -policyname <policy name> -ruleindex 1 -anon 65534`
+
+
+====
+.克隆限制
+* *显式存储类*：如果部署的应用程序已明确设置存储类、并且需要克隆此应用程序、则目标集群必须具有最初指定的存储类。将具有显式设置的存储类的应用程序克隆到没有相同存储类的集群将失败。
+* *UNONTAP NAS经济型应用程序*：如果应用程序的存储类由提供支持、则无法使用克隆操作 `ontap-nas-economy` 驱动程序。但是、您可以 link:../use/protect-apps.html#enable-backup-and-restore-for-ontap-nas-economy-operations["为ONTAP NAS经济型操作启用备份和还原"]。
+* *克隆和用户约束*：任何按命名空间名称/ID或命名空间标签限制命名空间的成员用户都可以将应用程序克隆或还原到同一集群上的新命名空间或其组织帐户中的任何其他集群。但是，同一用户无法访问新命名空间中的克隆或还原应用程序。克隆或还原操作创建新命名空间后、帐户管理员/所有者可以编辑成员用户帐户并更新受影响用户的角色约束、以授予对新命名空间的访问权限。
+* *克隆使用默认分段*：在应用程序备份或应用程序还原期间、您可以选择指定分段ID。但是，应用程序克隆操作始终使用已定义的默认分段。没有选项可用于更改克隆的分段。如果要控制使用哪个存储分段，您可以选择 link:../use/manage-buckets.html#edit-a-bucket["更改存储分段默认值"] 或者执行 link:../use/protect-apps.html#create-a-backup["backup"] 后跟 A link:../use/restore-apps.html["还原"] 请单独使用。
+* *使用Jenkins CI*：如果克隆操作员部署的Jenkins CI实例、则需要手动还原持久数据。这是应用程序部署模式的一个限制。
+* *对于S3存储分段*：Astra控制中心中的S3存储分段不报告可用容量。在备份或克隆由 Astra 控制中心管理的应用程序之前，请检查 ONTAP 或 StorageGRID 管理系统中的存储分段信息。
+* *使用特定版本的PostgreSQL时*：同一集群中的应用程序克隆始终失败，并显示BitNami PostgreSQL 11.5.0图表。要成功克隆，请使用图表的早期或更高版本。
+
+
+.OpenShift 注意事项
+* *集群和OpenShift版本*：如果在集群之间克隆应用程序、则源集群和目标集群必须是OpenShift的相同分发版本。例如，如果从 OpenShift 4.7 集群克隆应用程序，请使用同时也是 OpenShift 4.7 的目标集群。
+* *项目和UID*：在OpenShift集群上创建用于托管应用程序的项目时、系统会为该项目(或Kubernetes命名空间)分配一个SecurityContext UID。要使 Astra 控制中心能够保护您的应用程序并将应用程序移动到 OpenShift 中的其他集群或项目，您需要添加策略，使应用程序能够作为任何 UID 运行。例如，以下 OpenShift 命令行界面命令会为 WordPress 应用程序授予相应的策略。
++
+`oc new-project wordpress`
+`oc adm policy add-scc-to-group anyuid system:serviceaccounts:wordpress`
+`oc adm policy add-scc-to-user privileged -z default -n wordpress`
+
+
+
+.步骤
+. 选择 * 应用程序 * 。
+. 执行以下操作之一：
++
+** 在 * 操作 * 列中选择所需应用程序的选项菜单。
+** 选择所需应用程序的名称，然后选择页面右上角的状态下拉列表。
+
+
+. 选择 * 克隆 * 。
+. 指定克隆的详细信息：
++
+** 输入名称。
+** 选择克隆的目标集群。
+** 输入克隆的目标命名空间。与应用程序关联的每个源命名空间都会映射到您定义的目标命名空间。
++
+
+NOTE: 在克隆操作中、Astra Control会创建新的目标命名空间。指定的目标命名空间不能已存在于目标集群上。
+
+** 选择 * 下一步 * 。
+** 选择将原始存储类与应用程序保持关联、或者选择其他存储类。
++
+
+NOTE: 您可以将应用程序的存储类迁移到本机云提供商存储类或其他受支持的存储类、也可以将应用程序从支持的存储类迁移 `ontap-nas-economy` 存储类 `ontap-nas` 在同一集群上、或者将应用程序复制到存储类由支持的另一集群 `ontap-nas-economy` 驱动程序。
+
++
+
+NOTE: 如果您选择了其他存储类、但在还原时此存储类不存在、则会返回错误。
+
+
+
+. 选择 * 下一步 * 。
+. 查看有关克隆的信息、然后选择*克隆*。
+
+
+.结果
+Astra Control会根据您提供的信息克隆应用程序。当新应用程序克隆处于中时、克隆操作成功 `Healthy` 状态。
+
+克隆或还原操作创建新命名空间后、帐户管理员/所有者可以编辑成员用户帐户并更新受影响用户的角色约束、以授予对新命名空间的访问权限。
+
+
+NOTE: 在执行数据保护操作(克隆、备份或还原)并随后调整永久性卷大小后、在UI中显示新卷大小之前、最多会有20分钟的延迟。数据保护操作将在几分钟内成功完成，您可以使用存储后端的管理软件确认卷大小的更改。

@@ -1,0 +1,274 @@
+---
+sidebar: sidebar 
+permalink: use/manage-apps.html 
+keywords: how to manage apps with astra control, discover app, how to define kubernetes apps, astra control, astra 
+summary: '将Kubernetes集群添加到Astra Control后、您可以在该集群上安装应用程序(在Astra Control之外)、然后转到Astra Control中的"Applications"页面开始管理这些应用程序。' 
+---
+= 开始管理应用程序
+:hardbreaks:
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/use/
+
+
+[role="lead"]
+你先请 link:../get-started/setup_overview.html#add-cluster["将集群添加到 Astra Control 管理中"]、您可以在集群上安装应用程序(在Astra Control之外)、然后转到Astra Control中的应用程序页面来定义应用程序及其资源。
+
+您可以定义和管理包含存储资源且运行Pod的应用程序、或者包含存储资源且未运行任何Pod的应用程序。没有运行Pod的应用程序称为纯数据应用程序。
+
+
+
+== 应用程序管理要求
+
+Astra Control 具有以下应用程序管理要求：
+
+* *许可*：要使用Astra Control Center管理应用程序，您需要嵌入式Astra Control Center评估许可证或完整许可证。
+* *命名空间*：可以使用Astra Control在单个集群上的一个或多个指定命名空间内定义应用程序。一个应用程序可以包含跨越同一集群中多个命名空间的资源。Astra Control不支持在多个集群之间定义应用程序。
+* *存储类*：如果您安装的应用程序明确设置了存储类、并且需要克隆该应用程序、则克隆操作的目标集群必须具有最初指定的存储类。将具有显式设置的存储类的应用程序克隆到没有相同存储类的集群将失败。
+* * Kubernetes Resources* ：使用非 Astra Control 收集的 Kubernetes 资源的应用程序可能没有完整的应用程序数据管理功能。Astra Control 收集以下 Kubernetes 资源：
++
+[cols="1,1,1"]
+|===
+
+
+| `ClusterRole` | `ClusterRoleBinding` | `ConfigMap` 
+
+
+| `CronJob` | `CustomResourceDefinition` | `CustomResource` 
+
+
+| `DaemonSet` | `DeploymentConfig` | `HorizontalPodAutoscaler` 
+
+
+| `Ingress` | `MutatingWebhook` | `NetworkPolicy` 
+
+
+| `PersistentVolumeClaim` | `Pod` | `PodDisruptionBudget` 
+
+
+| `PodTemplate` | `ReplicaSet` | `Role` 
+
+
+| `RoleBinding` | `Route` | `Secret` 
+
+
+| `Service` | `ServiceAccount` | `StatefulSet` 
+
+
+| `ValidatingWebhook` |  |  
+|===
+
+
+
+
+== 支持的应用程序安装方法
+
+Astra Control 支持以下应用程序安装方法：
+
+* * 清单文件 * ： Astra Control 支持使用 kubectl 从清单文件安装的应用程序。例如：
++
+[source, console]
+----
+kubectl apply -f myapp.yaml
+----
+* * Helm 3* ：如果使用 Helm 安装应用程序，则 Astra Control 需要 Helm 版本 3 。完全支持管理和克隆随 Helm 3 安装的应用程序（或从 Helm 2 升级到 Helm 3 ）。不支持管理随 Helm 2 安装的应用程序。
+* *操作员部署的应用程序*：Astra Control支持使用命名空间范围的操作符安装的应用程序，这些操作符通常采用"传递值"而不是"传递参考"架构设计。操作员及其安装的应用程序必须使用相同的命名空间；您可能需要为操作员修改部署YAML文件、以确保情况确实如此。
++
+以下是一些遵循这些模式的操作员应用程序：
+
++
+** https://github.com/k8ssandra/cass-operator["Apache K8ssandra"^]
++
+
+NOTE: 对于K8ssand拉、支持就地还原操作。要对新命名空间或集群执行还原操作，需要关闭应用程序的原始实例。这是为了确保传输的对等组信息不会导致跨实例通信。不支持克隆应用程序。
+
+** https://github.com/jenkinsci/kubernetes-operator["Jenkins CI"^]
+** https://github.com/percona/percona-xtradb-cluster-operator["Percona XtraDB 集群"^]
+
+
++
+Astra Control可能无法克隆使用"按参考传递"架构设计的运算符(例如CockroachDB运算符)。在这些类型的克隆操作期间，克隆的操作员会尝试引用源操作员提供的 Kubernetes 机密，尽管在克隆过程中他们拥有自己的新机密。克隆操作可能会失败，因为 Astra Control 不知道源运算符中的 Kubernetes 密钥。
+
+
+
+
+
+== 在集群上安装应用程序
+
+你先请 link:../get-started/setup_overview.html#add-cluster["已添加集群"] 对于Astra Control、您可以在集群上安装应用程序或管理现有应用程序。可以管理范围限定为一个或多个命名空间的任何应用程序。
+
+
+
+== 定义应用程序
+
+在Astra Control发现集群上的命名空间后、您可以定义要管理的应用程序。您可以选择 <<定义要作为应用程序进行管理的资源,管理跨越一个或多个命名空间的应用程序>> 或 <<定义要作为应用程序进行管理的命名空间,将整个命名空间作为一个应用程序进行管理>>。这一切都可以细化到数据保护操作所需的粒度级别。
+
+虽然您可以使用Astra Control单独管理层次结构的两个级别(命名空间和该命名空间中的应用程序或跨命名空间)、但最佳做法是选择一个或另一个。如果在命名空间和应用程序级别同时执行操作，则在 Astra Control 中执行的操作可能会失败。
+
+
+TIP: 例如、您可能希望为"Maria"设置一个每周节奏的备份策略、但您可能需要比该策略更频繁地备份"MariaDB"(位于同一命名空间中)。根据这些需求、您需要单独管理这些应用程序、而不是作为单命名空间应用程序来管理。
+
+.开始之前
+* 已将Kubernetes集群添加到Astra Control中。
+* 集群上安装的一个或多个应用程序。 <<支持的应用程序安装方法,阅读有关支持的应用程序安装方法的更多信息>>。
+* 已添加到Astra Control的Kubernetes集群上的现有命名空间。
+* (可选) Any上的Kubernetes标签 link:../use/manage-apps.html#app-management-requirements["支持的Kubernetes资源"]。
++
+
+TIP: 标签是一个键 / 值对，您可以将其分配给 Kubernetes 对象进行标识。通过标签，可以更轻松地对 Kubernetes 对象进行排序，组织和查找。要了解有关 Kubernetes 标签的更多信息， https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/["请参见 Kubernetes 官方文档"^]。
+
+
+
+.关于此任务
+* 开始之前、您还应了解相关信息 link:../use/manage-apps.html#what-about-system-namespaces["管理标准命名空间和系统命名空间"]。
+* 如果您计划在Astra Control中对应用程序使用多个命名空间、 link:../use/manage-local-users-and-roles.html#add-a-namespace-constraint-to-a-role["修改具有命名空间限制的用户角色"] 升级到支持多命名空间的Astra Control Center版本后。
+* 有关如何使用 Astra Control API 管理应用程序的说明，请参见 link:https://docs.netapp.com/us-en/astra-automation/["Astra Automation 和 API 信息"^]。
+
+
+.应用程序管理选项
+* <<定义要作为应用程序进行管理的资源>>
+* <<定义要作为应用程序进行管理的命名空间>>
+
+
+
+
+=== 定义要作为应用程序进行管理的资源
+
+您可以指定 link:../concepts/app-management.html["构成应用程序的Kubernetes资源"] 要使用Astra Control进行管理的。通过定义应用程序、您可以将Kubernetes集群中的元素分组到一个应用程序中。此Kubernetes资源集合按命名空间和标签选择器标准进行组织。
+
+通过定义应用程序、您可以更精细地控制要包含在Astra Control操作中的内容、包括克隆、快照和备份。
+
+
+WARNING: 定义应用程序时、请确保不在具有保护策略的多个应用程序中包含Kubernetes资源。Kubernetes资源上重叠的保护策略可能会发生发生原因 数据冲突。 <<示例：不同版本的单独保护策略,阅读示例中的更多内容。>>
+
+.展开以了解有关将集群范围的资源添加到应用程序的更多信息。
+[%collapsible]
+====
+除了自动包含的Astra Control之外、您还可以导入与命名空间资源关联的集群资源。您可以添加一个规则、该规则将包含特定组的资源、种类、版本以及标签(可选)。如果存在Astra Control不会自动包含的资源、您可能需要执行此操作。
+
+您不能排除Astra Control自动包含的任何集群范围的资源。
+
+您可以添加以下内容 `apiVersions` (这些组与API版本结合使用)：
+
+[cols="1h,2d"]
+|===
+| 资源种类 | apiVersions (组+版本) 
+
+
+| `ClusterRole` | rbac.authorization.k8s.io/v1 
+
+
+| `ClusterRoleBinding` | rbac.authorization.k8s.io/v1 
+
+
+| `CustomResource` | apiextensions.k8s.io/v1、apiextensions.k8s.io/v1bea1 
+
+
+| `CustomResourceDefinition` | apiextensions.k8s.io/v1、apiextensions.k8s.io/v1bea1 
+
+
+| `MutatingWebhookConfiguration` | 可批准registration.K8s.IO/v1 
+
+
+| `ValidatingWebhookConfiguration` | 可批准registration.K8s.IO/v1 
+|===
+====
+.步骤
+. 从应用程序页面中、选择*定义*。
+. 在*定义应用程序*窗口中、输入应用程序名称。
+. 在*集群*下拉列表中选择运行应用程序的集群。
+. 从*命名空间*下拉列表中为应用程序选择一个命名空间。
++
+
+NOTE: 可以使用Astra Control在单个集群上的一个或多个指定命名空间中定义应用程序。一个应用程序可以包含跨越同一集群中多个命名空间的资源。Astra Control不支持在多个集群之间定义应用程序。
+
+. (可选)为每个命名空间中的Kubernetes资源输入一个标签。您可以指定单个标签或标签选择器条件(查询)。
++
+
+TIP: 要了解有关 Kubernetes 标签的更多信息， https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/["请参见 Kubernetes 官方文档"^]。
+
+. (可选)通过选择*添加命名空间*并从下拉列表中选择命名空间来为应用程序添加其他命名空间。
+. (可选)为您添加的任何其他命名空间输入单个标签或标签选择器条件。
+. (可选)要在Astra Control自动包含的资源之外还包括集群范围的资源、请选中*包括其他集群范围的资源*并完成以下操作：
++
+.. 选择*添加包含规则*。
+.. *组*：从下拉列表中、选择API资源组。
+.. *种类*：从下拉列表中、选择对象架构的名称。
+.. *版本*：输入API版本。
+.. *标签选择器*：也可以包括要添加到规则中的标签。此标签仅用于检索与此标签匹配的资源。如果不提供标签、则Astra Control将收集为该集群指定的所有资源类型的实例。
+.. 查看根据条目创建的规则。
+.. 选择 * 添加 * 。
++
+
+TIP: 您可以根据需要创建任意数量的集群范围资源规则。这些规则将显示在"定义应用程序摘要"中。
+
+
+
+. 选择 * 定义 * 。
+. 选择*定义*后、根据需要对其他应用程序重复此过程。
+
+
+定义完应用程序后、该应用程序将显示在中 `Healthy` 在应用程序页面上的应用程序列表中的状态。现在、您可以克隆它并创建备份和快照。
+
+
+NOTE: 您刚刚添加的应用程序在 " 受保护 " 列下可能会显示一个警告图标，表示它尚未备份，并且尚未计划备份。
+
+
+TIP: 要查看特定应用程序的详细信息，请选择应用程序名称。
+
+要查看添加到此应用程序的资源、请选择*资源*选项卡。在资源列中选择资源名称后面的数字、或者在搜索中输入资源名称、以查看包含的其他集群范围资源。
+
+
+
+=== 定义要作为应用程序进行管理的命名空间
+
+您可以通过将命名空间的资源定义为应用程序来将命名空间中的所有Kubernetes资源添加到Astra Control管理中。如果您要以类似的方式并以通用间隔管理和保护特定命名空间中的所有资源、则此方法比单独定义应用程序更好。
+
+.步骤
+. 从集群页面中、选择一个集群。
+. 选择*命名空间*选项卡。
+. 选择包含要管理的应用程序资源的命名空间的"Actions"菜单、然后选择*定义为应用程序*。
++
+
+TIP: 如果要定义多个应用程序、请从命名空间列表中进行选择、然后选择左上角的*操作*按钮并选择*定义为应用程序*。这将在各个命名空间中定义多个单独的应用程序。有关多命名空间应用程序、请参见 <<定义要作为应用程序进行管理的资源>>。
+
++
+
+NOTE: 选中*显示系统命名空间*复选框以显示默认情况下在应用程序管理中不使用的系统命名空间。 image:acc_namespace_system.png["显示命名空间选项卡中提供的*显示系统命名空间*选项的屏幕截图。"]  link:../use/manage-apps.html#what-about-system-namespaces["阅读更多内容"]。
+
+
+
+此过程完成后、与此命名空间关联的应用程序将显示在中 `Associated applications` 列。
+
+
+
+== 系统命名空间如何？
+
+Astra Control还会发现Kubernetes集群上的系统命名空间。默认情况下、我们不会向您显示这些系统命名空间、因为您很少需要备份系统应用程序资源。
+
+通过选中*显示系统命名空间*复选框、您可以从选定集群的命名空间选项卡中显示系统命名空间。
+
+image:acc_namespace_system.png["显示命名空间选项卡中提供的*显示系统命名空间*选项的屏幕截图。"]
+
+
+TIP: Astra Control Center默认情况下不会显示为您可以管理的应用程序、但您可以使用另一个Astra Control Center实例备份和还原Astra Control Center实例。
+
+
+
+== 示例：不同版本的单独保护策略
+
+在此示例中、DevOps团队正在管理"金丝利"版本部署。该团队的集群中有三个Pod运行nginx。其中两个 Pod 专用于稳定版本。第三个 POD 适用于加那利版本。
+
+开发运营团队的Kubernetes管理员会添加此标签 `deployment=stable` 稳定释放Pod。该团队将添加此标签 `deployment=canary` 加那利释放POD。
+
+该团队的稳定版本要求每小时创建一次快照，每天进行备份。金那利版本更短暂、因此他们希望为任何标记的对象创建一个不太积极的短期保护策略 `deployment=canary`。
+
+为了避免可能发生的数据冲突、管理员将创建两个应用程序：一个用于"加那利"版本、一个用于"稳定"版本。这样就可以使两组 Kubernetes 对象的备份，快照和克隆操作分开。
+
+
+
+== 了解更多信息
+
+* https://docs.netapp.com/us-en/astra-automation["使用 Astra Control API"^]
+* link:../use/unmanage.html["取消管理应用程序"]
+

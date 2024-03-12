@@ -1,0 +1,162 @@
+---
+sidebar: sidebar 
+permalink: use/manage-buckets.html 
+keywords: how to set up object storage in astra, how to set up astra buckets, s3, astra, setting up astra control, astra control center, kubernetes 
+summary: 如果要备份应用程序和永久性存储，或者要跨集群克隆应用程序，则必须添加对象存储分段提供程序。 
+---
+= 管理存储分段
+:hardbreaks:
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/use/
+
+
+[role="lead"]
+如果要备份应用程序和永久性存储，或者要跨集群克隆应用程序，则对象存储分段提供程序至关重要。使用 Astra 控制中心，添加一个对象存储提供程序作为应用程序的集群外备份目标。
+
+如果要将应用程序配置和永久性存储克隆到同一集群、则不需要存储分段。
+
+使用以下 Amazon Simple Storage Service （ S3 ）存储分段提供商之一：
+
+* NetApp ONTAP S3
+* NetApp StorageGRID S3
+* Microsoft Azure
+* 通用 S3
++
+
+NOTE: Amazon Web Services (AWS)和Google Cloud Platform (GCP)使用通用S3存储分段类型。
+
++
+
+NOTE: 虽然Astra控制中心支持将Amazon S3作为通用S3存储分段提供商、但Astra控制中心可能不支持声称支持Amazon S3的所有对象存储供应商。
+
+
+
+存储分段可以处于以下状态之一：
+
+* Pending ：存储分段已计划进行发现。
+* Available ：存储分段可供使用。
+* Removed：当前无法访问存储分段。
+
+
+有关如何使用 Astra Control API 管理存储分段的说明，请参见 link:https://docs.netapp.com/us-en/astra-automation/["Astra Automation 和 API 信息"^]。
+
+您可以执行以下与管理存储分段相关的任务：
+
+* link:../get-started/setup_overview.html#add-a-bucket["添加存储分段"]
+* <<编辑存储分段>>
+* <<设置默认分段>>
+* <<轮换或删除存储分段凭据>>
+* <<删除存储分段>>
+
+
+
+NOTE: Astra 控制中心中的 S3 存储分段不会报告可用容量。在备份或克隆由 Astra 控制中心管理的应用程序之前，请检查 ONTAP 或 StorageGRID 管理系统中的存储分段信息。
+
+
+
+== 编辑存储分段
+
+您可以更改存储分段的访问凭据信息，并更改选定存储分段是否为默认存储分段。
+
+
+NOTE: 添加存储分段时，请选择正确的存储分段提供程序，并为该提供程序提供正确的凭据。例如， UI 接受 NetApp ONTAP S3 作为类型并接受 StorageGRID 凭据；但是，这将发生原因使使用此存储分段执行所有未来应用程序备份和还原失败。请参见 link:../release-notes/known-issues.html#selecting-a-bucket-provider-type-with-credentials-for-another-type-causes-data-protection-failures["发行说明"]。
+
+.步骤
+. 从左侧导航栏中、选择*分段*。
+. 从菜单的*操作*列中、选择*编辑*。
+. 更改存储分段类型以外的任何信息。
++
+
+TIP: 您无法修改存储分段类型。
+
+. 选择 * 更新 * 。
+
+
+
+
+== 设置默认分段
+
+在集群间执行克隆时、Astra Control需要一个默认分段。按照以下步骤为所有集群设置默认存储分段。
+
+.步骤
+. 转至*云实例*。
+. 在列表中的*操作*列中为云实例选择菜单。
+. 选择 * 编辑 * 。
+. 在*分段*列表中、选择要用作默认分段的分段。
+. 选择 * 保存 * 。
+
+
+
+
+== 轮换或删除存储分段凭据
+
+Astra Control使用存储分段凭据获取访问权限、并为S3存储分段提供机密密钥、以便Astra控制中心可以与存储分段进行通信。
+
+
+
+=== 轮换存储分段凭据
+
+如果要轮换凭据、请在维护窗口中没有正在进行的备份(计划备份或按需备份)时轮换凭据。
+
+.编辑和轮换凭据的步骤
+. 从左侧导航栏中、选择*分段*。
+. 从选项菜单的 * 操作 * 列中，选择 * 编辑 * 。
+. 创建新凭据。
+. 选择 * 更新 * 。
+
+
+
+
+=== 删除存储分段凭据
+
+只有在已将新凭据应用于存储分段或存储分段不再处于活动状态时、才应删除存储分段凭据。
+
+
+TIP: 添加到 Astra Control 的第一组凭据始终处于使用状态，因为 Astra Control 使用这些凭据对备份存储分段进行身份验证。如果存储分段正在使用中、请勿删除这些凭据、因为这会导致备份失败和备份不可用。
+
+
+NOTE: 如果删除了活动存储分段凭据、请参见 https://kb.netapp.com/Cloud/Astra/Control/Deleting_active_S3_bucket_credentials_leads_to_spurious_500_errors_reported_in_the_UI["对删除存储分段凭据进行故障排除"]。
+
+有关如何使用Astra Control API删除S3凭据的说明、请参见 link:https://docs.netapp.com/us-en/astra-automation/["Astra Automation 和 API 信息"^]。
+
+
+
+== 删除存储分段
+
+您可以删除不再使用或运行状况不佳的存储分段。您可能需要执行此操作以使对象存储配置简单且最新。
+
+[NOTE]
+====
+* 您不能删除默认存储分段。如果要删除此存储分段，请先选择另一个存储分段作为默认存储。
+* 在"一次写入、多次读取"(WORM)分段的云提供程序保留期限到期之前、您不能删除该分段。WORm分段名称旁用"已锁定"表示。
+
+
+====
+* 您不能删除默认存储分段。如果要删除此存储分段，请先选择另一个存储分段作为默认存储。
+
+
+.开始之前
+* 开始之前，应检查以确保此存储分段没有正在运行或已完成的备份。
+* 您应进行检查，以确保存储分段未在任何活动保护策略中使用。
+
+
+如果存在，您将无法继续。
+
+.步骤
+. 从左侧导航栏中，选择 * 分段器 * 。
+. 从 * 操作 * 菜单中，选择 * 删除 * 。
++
+
+NOTE: Astra Control 可首先确保没有使用存储分段进行备份的计划策略，并且要删除的存储分段中没有活动备份。
+
+. 键入 "remove" 确认此操作。
+. 选择 * 是，删除存储分段 * 。
+
+
+
+
+== 了解更多信息
+
+* https://docs.netapp.com/us-en/astra-automation["使用 Astra Control API"^]
+

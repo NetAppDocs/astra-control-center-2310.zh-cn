@@ -1,0 +1,559 @@
+---
+sidebar: sidebar 
+permalink: use/upgrade-acc.html 
+keywords: astra upgrade, upgrade astra control center, how to upgrade astra control, update 
+summary: 要升级 Astra 控制中心，您需要下载此捆绑包并按照所述步骤进行升级。 
+---
+= 升级 Astra 控制中心
+:hardbreaks:
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/get-started/
+
+
+[role="lead"]
+要升级Astra控制中心、请从NetApp 支持站点 下载安装包并完成以下说明。您可以使用此操作步骤在互联网连接或通风环境中升级 Astra 控制中心。
+
+这些说明介绍了Astra Control Center从第二个最新版本升级到此最新版本的过程。您不能直接从比当前版本落后两个或更多版本的版本升级。如果您安装的Astra Control Center版本比最新版本晚许多版本、您可能需要执行链式升级到更高版本、直到您安装的Astra Control Center仅比最新版本晚一个版本。有关已发布版本的完整列表、请参见 link:../release-notes/whats-new.html["发行说明"^]。
+
+.开始之前
+在升级之前、请确保您的环境仍满足 link:../get-started/requirements.html["Asta Control Center部署的最低要求"^]。您的环境应具有以下内容：
+
+* *1. link:../get-started/requirements.html#astra-trident-requirements["supported"] Astra三项功能*
++
+.展开步骤
+[%collapsible]
+====
+确定您正在运行的｛\f429 TRIdent｝版本：
+
+[source, console]
+----
+kubectl get tridentversion -n trident
+----
+
+NOTE: 如果需要、使用这些工具升级Asta三端到子 https://docs.netapp.com/us-en/trident/trident-managing-k8s/upgrade-trident.html["说明"^]。
+
+====
+
+
+
+IMPORTANT: 23.10版是Astra Control Center的最后一个版本、它将支持Astra Trident。强烈建议您这样做 link:../use/enable-acp.html["启用Asta Control配置程序"] 访问Asta三元数据以外的高级管理和存储配置功能。要使用此扩展功能、您必须同时升级到Astra Control Center 23.10并启用Astra Control配置程序。Asta Control配置程序不能与早期版本的Asta Control Center一起使用。
+
+* *支持的Kubernetes分发*
++
+.展开步骤
+[%collapsible]
+====
+确定您正在运行的Kubenetes版本：
+
+[source, console]
+----
+kubectl get nodes -o wide
+----
+====
+* *集群资源充足*
++
+.展开步骤
+[%collapsible]
+====
+确定可用的集群资源：
+
+[source, console]
+----
+kubectl describe node <node name>
+----
+====
+* *可用于推送和上传Astra Control Center映像的注册表*
+* *默认存储类*
++
+.展开步骤
+[%collapsible]
+====
+确定默认存储类：
+
+[source, console]
+----
+kubectl get storageclass
+----
+====
+* *运行状况良好且可用的API服务*
++
+.展开步骤
+[%collapsible]
+====
+确保所有 API 服务均处于运行状况良好且可用：
+
+[source, console]
+----
+kubectl get apiservices
+----
+====
+* *(仅限OpenShift)运行状况良好且可用的集群操作符*
++
+.展开步骤
+[%collapsible]
+====
+确保所有集群操作员均处于运行状况良好且可用。
+
+[source, console]
+----
+kubectl get clusteroperators
+----
+====
+* *访问NetApp Astra控件映像注册表*：
+您可以选择从NetApp映像注册表中获取Astra控件的安装映像和增强功能、例如Astra控件配置程序。
++
+.展开步骤
+[%collapsible]
+====
+.. 记录您登录注册表所需的Astra Control帐户ID。
++
+您可以在Astra Control Service Web UI中查看您的帐户ID。选择页面右上角的图图标，选择*API access*并记下您的帐户ID。
+
+.. 在同一页面中，选择*Generate API t令牌*并将API令牌字符串复制到剪贴板，然后将其保存在编辑器中。
+.. 登录到Asta Control注册表：
++
+[source, console]
+----
+docker login cr.astra.netapp.io -u <account-id> -p <api-token>
+----
+
+
+====
+
+
+.关于此任务
+Astra 控制中心升级过程将指导您完成以下高级步骤：
+
+
+NOTE: 在开始升级之前、请从Astra控制中心用户界面中注销。
+
+* <<下载并提取Astra控制中心>>
+* <<删除NetApp Astra kubectl插件并重新安装>>
+* <<将映像添加到本地注册表>>
+* <<安装更新后的 Astra 控制中心操作员>>
+* <<升级 Astra 控制中心>>
+* <<验证系统状态>>
+
+
+
+IMPORTANT: 请勿删除Astra Control Center运算符(例如、 `kubectl delete -f astra_control_center_operator_deploy.yaml`)、以避免删除Pod。
+
+
+TIP: 如果计划，备份和快照未运行，请在维护窗口中执行升级。
+
+
+
+== 下载并提取Astra控制中心
+
+您可以选择从NetApp 支持站点 下载Astra控制中心包、也可以使用Docker从Astra控制服务映像注册表中提取该包。
+
+[role="tabbed-block"]
+====
+.NetApp 支持站点
+--
+. 下载包含Astra Control Center的软件包 (`astra-control-center-[version].tar.gz`) https://mysupport.netapp.com/site/products/all/details/astra-control-center/downloads-tab["Astra Control Center下载页面"^]。
+. (建议但可选)下载Astra控制中心的证书和签名包 (`astra-control-center-certs-[version].tar.gz`)以验证分发包的签名。
++
+.展开以查看详细信息
+[%collapsible]
+=====
+[source, console]
+----
+tar -vxzf astra-control-center-certs-[version].tar.gz
+----
+[source, console]
+----
+openssl dgst -sha256 -verify certs/AstraControlCenter-public.pub -signature certs/astra-control-center-[version].tar.gz.sig astra-control-center-[version].tar.gz
+----
+此时将显示输出 `Verified OK` 验证成功后。
+
+=====
+. 从Astra Control Center捆绑包中提取映像：
++
+[source, console]
+----
+tar -vxzf astra-control-center-[version].tar.gz
+----
+
+
+--
+.Astra Control图像注册表
+--
+. 登录Asta Control Service。
+. 在信息板上，选择*Deploy a self-managed instance* of Asta Control*。
+. 按照说明登录到Astra Control映像注册表、提取Astra Control Center安装映像并提取该映像。
+
+
+--
+====
+
+
+== 删除NetApp Astra kubectl插件并重新安装
+
+您可以使用NetApp Asta kubect命令行插件将映像推送到本地Docker存储库。
+
+. 确定是否已安装此插件：
++
+[source, console]
+----
+kubectl astra
+----
+. 执行以下操作之一：
++
+** 如果已安装此插件、则此命令应返回kubecTn插件帮助、您可以删除现有版本的kubecT1-Asta： `delete /usr/local/bin/kubectl-astra`。
+** 如果此命令返回错误、则表示未安装此插件、您可以继续执行下一步以安装它。
+
+
+. 安装插件：
++
+.. 列出可用的NetApp Astra kubectl插件二进制文件、并记下操作系统和CPU架构所需的文件名称：
++
+
+NOTE: kubectl插件库是tar包的一部分、并会解压缩到文件夹中 `kubectl-astra`。
+
++
+[source, console]
+----
+ls kubectl-astra/
+----
+.. 将正确的二进制文件移动到当前路径并重命名为 `kubectl-astra`：
++
+[source, console]
+----
+cp kubectl-astra/<binary-name> /usr/local/bin/kubectl-astra
+----
+
+
+
+
+
+
+== 将映像添加到本地注册表
+
+. 为容器引擎完成相应的步骤顺序：
+
+
+[role="tabbed-block"]
+====
+.Docker
+--
+. 更改为tarball的根目录。您应看到 `acc.manifest.bundle.yaml` 文件和以下目录：
++
+`acc/`
+`kubectl-astra/`
+`acc.manifest.bundle.yaml`
+
+. 将Astra Control Center映像目录中的软件包映像推送到本地注册表。在运行之前、请进行以下替换 `push-images` 命令：
++
+** 将<BUNDLE_FILE> 替换为Astra Control捆绑包文件的名称 (`acc.manifest.bundle.yaml`）。
+** 将<MY_FULL_REGISTRY_PATH> 替换为Docker存储库的URL；例如 "https://<docker-registry>"[]。
+** 将<MY_REGISTRY_USER> 替换为用户名。
+** 将<MY_REGISTRY_TOKEN> 替换为注册表的授权令牌。
++
+[source, console]
+----
+kubectl astra packages push-images -m <BUNDLE_FILE> -r <MY_FULL_REGISTRY_PATH> -u <MY_REGISTRY_USER> -p <MY_REGISTRY_TOKEN>
+----
+
+
+
+
+--
+.Podman
+--
+. 更改为tarball的根目录。您应看到此文件和目录：
++
+`acc/`
+`kubectl-astra/`
+`acc.manifest.bundle.yaml`
+
+. 登录到注册表：
++
+[source, console]
+----
+podman login <YOUR_REGISTRY>
+----
+. 准备并运行以下针对您使用的Podman版本自定义的脚本之一。将<MY_FULL_REGISTRY_PATH> 替换为包含任何子目录的存储库的URL。
++
+[source, subs="specialcharacters,quotes"]
+----
+*Podman 4*
+----
++
+[source, console]
+----
+export REGISTRY=<MY_FULL_REGISTRY_PATH>
+export PACKAGENAME=acc
+export PACKAGEVERSION=23.10.0-68
+export DIRECTORYNAME=acc
+for astraImageFile in $(ls ${DIRECTORYNAME}/images/*.tar) ; do
+astraImage=$(podman load --input ${astraImageFile} | sed 's/Loaded image: //')
+astraImageNoPath=$(echo ${astraImage} | sed 's:.*/::')
+podman tag ${astraImageNoPath} ${REGISTRY}/netapp/astra/${PACKAGENAME}/${PACKAGEVERSION}/${astraImageNoPath}
+podman push ${REGISTRY}/netapp/astra/${PACKAGENAME}/${PACKAGEVERSION}/${astraImageNoPath}
+done
+----
++
+[source, subs="specialcharacters,quotes"]
+----
+*Podman 3*
+----
++
+[source, console]
+----
+export REGISTRY=<MY_FULL_REGISTRY_PATH>
+export PACKAGENAME=acc
+export PACKAGEVERSION=23.10.0-68
+export DIRECTORYNAME=acc
+for astraImageFile in $(ls ${DIRECTORYNAME}/images/*.tar) ; do
+astraImage=$(podman load --input ${astraImageFile} | sed 's/Loaded image: //')
+astraImageNoPath=$(echo ${astraImage} | sed 's:.*/::')
+podman tag ${astraImageNoPath} ${REGISTRY}/netapp/astra/${PACKAGENAME}/${PACKAGEVERSION}/${astraImageNoPath}
+podman push ${REGISTRY}/netapp/astra/${PACKAGENAME}/${PACKAGEVERSION}/${astraImageNoPath}
+done
+----
++
+
+NOTE: 根据您的注册表配置、此脚本创建的映像路径应类似于以下内容：
+
++
+[listing]
+----
+https://downloads.example.io/docker-astra-control-prod/netapp/astra/acc/23.10.0-68/image:version
+----
+
+
+--
+====
+
+
+== 安装更新后的 Astra 控制中心操作员
+
+. 更改目录：
++
+[source, console]
+----
+cd manifests
+----
+. 编辑Astra控制中心操作员部署YAML (`astra_control_center_operator_deploy.yaml`)以引用您的本地注册表和密钥。
++
+[source, console]
+----
+vim astra_control_center_operator_deploy.yaml
+----
++
+.. 如果您使用的注册表需要身份验证、请替换或编辑的默认行 `imagePullSecrets: []` 使用以下命令：
++
+[source, console]
+----
+imagePullSecrets: [{name: astra-registry-cred}]
+----
+.. 更改 `ASTRA_IMAGE_REGISTRY` 。 `kube-rbac-proxy` 将映像推送到注册表路径中 <<将映像添加到本地注册表,上一步>>。
+.. 更改 `ASTRA_IMAGE_REGISTRY` 。 `acc-operator` 将映像推送到注册表路径中 <<将映像添加到本地注册表,上一步>>。
+.. 将以下值添加到 `env` 部分。
++
+[source, console]
+----
+- name: ACCOP_HELM_UPGRADETIMEOUT
+  value: 300m
+----
+
+
++
+.示例Astra_control_cCenter_operator_Deploy。yaml：
+[%collapsible]
+====
+[listing, subs="+quotes"]
+----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: acc-operator-controller-manager
+  namespace: netapp-acc-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=10
+        *image: ASTRA_IMAGE_REGISTRY/kube-rbac-proxy:v4.8.0*
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+      - args:
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=127.0.0.1:8080
+        - --leader-elect
+        env:
+        - name: ACCOP_LOG_LEVEL
+          value: "2"
+        *- name: ACCOP_HELM_UPGRADETIMEOUT*
+          *value: 300m*
+        *image: ASTRA_IMAGE_REGISTRY/acc-operator:23.10.72*
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 300m
+            memory: 750Mi
+          requests:
+            cpu: 100m
+            memory: 75Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+      *imagePullSecrets: []*
+      securityContext:
+        runAsUser: 65532
+      terminationGracePeriodSeconds: 10
+----
+====
+. 安装更新后的 Astra 控制中心操作员：
++
+[source, console]
+----
+kubectl apply -f astra_control_center_operator_deploy.yaml
+----
++
+.响应示例：
+[%collapsible]
+====
+[listing]
+----
+namespace/netapp-acc-operator unchanged
+customresourcedefinition.apiextensions.k8s.io/astracontrolcenters.astra.netapp.io configured
+role.rbac.authorization.k8s.io/acc-operator-leader-election-role unchanged
+clusterrole.rbac.authorization.k8s.io/acc-operator-manager-role configured
+clusterrole.rbac.authorization.k8s.io/acc-operator-metrics-reader unchanged
+clusterrole.rbac.authorization.k8s.io/acc-operator-proxy-role unchanged
+rolebinding.rbac.authorization.k8s.io/acc-operator-leader-election-rolebinding unchanged
+clusterrolebinding.rbac.authorization.k8s.io/acc-operator-manager-rolebinding configured
+clusterrolebinding.rbac.authorization.k8s.io/acc-operator-proxy-rolebinding unchanged
+configmap/acc-operator-manager-config unchanged
+service/acc-operator-controller-manager-metrics-service unchanged
+deployment.apps/acc-operator-controller-manager configured
+----
+====
+. 验证Pod是否正在运行：
++
+[source, console]
+----
+kubectl get pods -n netapp-acc-operator
+----
+
+
+
+
+== 升级 Astra 控制中心
+
+. 编辑Astra Control Center自定义资源(CR)：
++
+[source, console]
+----
+kubectl edit AstraControlCenter -n [netapp-acc or custom namespace]
+----
+. 更改Astra版本号 (`astraVersion` 在中 `spec`)升级到要升级到的版本：
++
+[listing, subs="+quotes"]
+----
+spec:
+  accountName: "Example"
+  *astraVersion: "[Version number]"*
+----
+. 验证您的映像注册表路径是否与您在中将映像推送到的注册表路径匹配 <<将映像添加到本地注册表,上一步>>。更新 `imageRegistry` 在中 `spec` 注册表自上次安装以来是否发生了更改。
++
+[listing]
+----
+  imageRegistry:
+    name: "[your_registry_path]"
+----
+. 将以下内容添加到 `crds` 中的配置 `spec`：
++
+[source, console]
+----
+crds:
+  shouldUpgrade: true
+----
+. 在中添加以下行 `additionalValues` 在中 `spec` 在Astra控制中心CR中：
++
+[source, console]
+----
+additionalValues:
+    nautilus:
+      startupProbe:
+        periodSeconds: 30
+        failureThreshold: 600
+    keycloak-operator:
+      livenessProbe:
+        initialDelaySeconds: 180
+      readinessProbe:
+        initialDelaySeconds: 180
+----
+. 保存并退出文件编辑器。此时将应用所做的更改、并开始升级。
+. （可选）验证 Pod 是否终止并重新可用：
++
+[source, console]
+----
+watch kubectl get pods -n [netapp-acc or custom namespace]
+----
+. 等待Astra Control状态条件指示升级已完成且准备就绪 (`True`）：
++
+[source, console]
+----
+kubectl get AstraControlCenter -n [netapp-acc or custom namespace]
+----
++
+响应：
+
++
+[listing]
+----
+NAME    UUID                                      VERSION     ADDRESS         READY
+astra   9aa5fdae-4214-4cb7-9976-5d8b4c0ce27f      23.10.0-68   10.111.111.111  True
+----
++
+
+NOTE: 要在操作期间监控升级状态、请运行以下命令： `kubectl get AstraControlCenter -o yaml -n [netapp-acc or custom namespace]`
+
++
+
+NOTE: 要检查Astra控制中心操作员日志、请运行以下命令：
+`kubectl logs deploy/acc-operator-controller-manager -n netapp-acc-operator -c manager -f`
+
+
+
+
+
+== 验证系统状态
+
+. 登录到 Astra 控制中心。
+. 验证此版本是否已升级。请参见用户界面中的*支持*页面。
+. 验证所有受管集群和应用程序是否仍存在并受到保护。
+

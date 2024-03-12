@@ -1,0 +1,228 @@
+---
+sidebar: sidebar 
+permalink: release-notes/known-limitations.html 
+keywords: astra, control center, limitations, known limitations, interoperability 
+summary: 已知限制确定了本产品版本不支持的平台、设备或功能、或者这些平台、设备或功能无法与产品正确交互操作。仔细审查这些限制。 
+---
+= 已知限制
+:hardbreaks:
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/release-notes/
+
+
+[role="lead"]
+已知限制确定了本产品版本不支持的平台、设备或功能、或者这些平台、设备或功能无法与产品正确交互操作。仔细审查这些限制。
+
+.集群管理限制
+* <<同一集群不能由两个 Astra Control Center 实例管理>>
+* <<Astra 控制中心无法管理两个命名相同的集群>>
+
+
+.基于角色的访问控制（ Role-Based Access Control ， RBAC ）限制
+* <<具有命名空间 RBAC 限制的用户可以添加和取消管理集群>>
+* <<具有命名空间约束的成员无法访问克隆或还原的应用程序，直到管理员将命名空间添加到此限制中为止>>
+
+
+.应用程序管理限制
+* <<一个命名空间中的多个应用程序无法一起还原到另一个命名空间>>
+* <<Astra Control不支持每个命名空间使用多个存储类的应用程序>>
+* <<Astra Control不会自动为云实例分配默认分段>>
+* <<使用按参考传递操作符安装的应用程序克隆可能会失败>>
+* <<不支持对使用证书管理器的应用程序执行原位还原操作>>
+* <<不支持已部署的应用程序，这些应用程序已启用 olm ，并且已部署集群范围>>
+* <<不支持使用 Helm 2 部署的应用程序>>
+* <<使用某些Snapshot控制器版本的Kubernetes 1.25或更高版本集群的快照可能会失败>>
+* <<删除 Astra Control Center 实例期间，备份和快照可能不会保留>>
+
+
+.一般限制
+* <<LDAP用户和组限制>>
+* <<Astra 控制中心中的 S3 存储分段不会报告可用容量>>
+* <<Astra 控制中心不会验证您为代理服务器输入的详细信息>>
+* <<与 Postgres Pod 的现有连接导致故障>>
+* <<"Activity"页面最多可显示100000个事件>>
+* <<SnapMirror不支持将基于TCP的NVMe用于存储后端的应用程序>>
+
+
+
+
+== 同一集群不能由两个 Astra Control Center 实例管理
+
+如果要管理另一个 Astra Control Center 实例上的集群，应首先进行管理 link:../use/unmanage.html#stop-managing-compute["取消管理集群"] 在另一个实例上管理之前，先从所管理的实例进行管理。从管理中删除集群后，执行以下命令以验证此集群是否未受管理：
+
+[listing]
+----
+oc get pods n -netapp-monitoring
+----
+此命名空间中不应运行任何 Pod ，或者此命名空间不应存在。如果其中任一项为 true ，则集群不受管理。
+
+
+
+== Astra 控制中心无法管理两个命名相同的集群
+
+如果您尝试添加与已存在的集群同名的集群，则此操作将失败。如果未更改 Kubernetes 配置文件中的集群默认名称，则此问题描述最常发生在标准 Kubernetes 环境中。
+
+作为临时解决策，请执行以下操作：
+
+. 编辑 `kubeadm-config` 配置映射：
++
+[listing]
+----
+kubectl edit configmaps -n kube-system kubeadm-config
+----
+. 更改 `clusterName` 字段值自 `kubernetes` (Kubernetes的默认名称)设置为唯一的自定义名称。
+. 编辑kubeconfig (`.kube/config`）。
+. 从更新集群名称 `kubernetes` 唯一的自定义名称 (`xyz-cluster` 在以下示例中使用)。在这两个中进行更新 `clusters` 和 `contexts` 本示例中所示的部分：
++
+[listing, subs="+quotes"]
+----
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: ExAmPLERb2tCcjZ5K3E2Njk4eQotLExAMpLEORCBDRVJUSUZJQ0FURS0txxxxXX==
+    server: https://x.x.x.x:6443
+  *name: xyz-cluster*
+contexts:
+- context:
+    *cluster: xyz-cluster*
+    namespace: default
+    user: kubernetes-admin
+  name: kubernetes-admin@kubernetes
+current-context: kubernetes-admin@kubernetes
+----
+
+
+
+
+== 具有命名空间 RBAC 限制的用户可以添加和取消管理集群
+
+不应允许具有命名空间 RBAC 限制的用户添加或取消管理集群。由于当前的限制， Astra 不会阻止此类用户取消管理集群。
+
+
+
+== 具有命名空间约束的成员无法访问克隆或还原的应用程序，直到管理员将命名空间添加到此限制中为止
+
+任意 `member` 使用命名空间名称/ID限制RBAC的用户可以将应用程序克隆或还原到同一集群上的新命名空间或其组织帐户中的任何其他集群。但是，同一用户无法访问新命名空间中的克隆或还原应用程序。克隆或还原操作创建新命名空间后、帐户管理员/所有者可以编辑 `member` 受影响用户的用户帐户和更新角色约束、以授予对新命名空间的访问权限。
+
+
+
+== 一个命名空间中的多个应用程序无法一起还原到另一个命名空间
+
+如果您在一个命名空间中管理多个应用程序(通过在Astra Control中创建多个应用程序定义)、则无法将所有应用程序还原到另一个命名空间。您需要将每个应用程序还原到其自己单独的命名空间。
+
+
+
+== Astra Control不支持每个命名空间使用多个存储类的应用程序
+
+Astra Control支持每个命名空间使用一个存储类的应用程序。将应用程序添加到命名空间时、请确保该应用程序与命名空间中的其他应用程序具有相同的存储类。
+
+
+
+== Astra Control不会自动为云实例分配默认分段
+
+Astra Control不会自动为任何云实例分配默认分段。您需要手动设置云实例的默认存储分段。如果未设置默认分段、您将无法在两个集群之间执行应用程序克隆操作。
+
+
+
+== 使用按参考传递操作符安装的应用程序克隆可能会失败
+
+Astra Control 支持使用命名空间范围的运算符安装的应用程序。这些操作员通常采用 " 按价值传递 " 架构，而不是 " 按参考传递 " 架构。以下是一些遵循这些模式的操作员应用程序：
+
+* https://github.com/k8ssandra/cass-operator["Apache K8ssandra"^]
++
+
+NOTE: 对于K8ssand拉、支持就地还原操作。要对新命名空间或集群执行还原操作，需要关闭应用程序的原始实例。这是为了确保传输的对等组信息不会导致跨实例通信。不支持克隆应用程序。
+
+* https://github.com/jenkinsci/kubernetes-operator["Jenkins CI"^]
+* https://github.com/percona/percona-xtradb-cluster-operator["Percona XtraDB 集群"^]
+
+
+Astra Control可能无法克隆使用"按参考传递"架构设计的运算符(例如CockroachDB运算符)。在这些类型的克隆操作期间，克隆的操作员会尝试引用源操作员提供的 Kubernetes 机密，尽管在克隆过程中他们拥有自己的新机密。克隆操作可能会失败，因为 Astra Control 不知道源运算符中的 Kubernetes 密钥。
+
+
+NOTE: 在克隆操作期间、需要IngressClass资源或webhooks才能正常运行的应用程序不能在目标集群上定义这些资源。
+
+
+
+== 不支持对使用证书管理器的应用程序执行原位还原操作
+
+此版本的 Astra 控制中心不支持使用证书管理器原位还原应用程序。支持将还原操作还原到其他命名空间和克隆操作。
+
+
+
+== 不支持已部署的应用程序，这些应用程序已启用 olm ，并且已部署集群范围
+
+Astra 控制中心不支持使用集群范围的操作员执行应用程序管理活动。
+
+
+
+== 不支持使用 Helm 2 部署的应用程序
+
+如果您使用 Helm 部署应用程序，则 Astra 控制中心需要 Helm 版本 3 。完全支持管理和克隆使用 Helm 3 部署的应用程序（或从 Helm 2 升级到 Helm 3 ）。有关详细信息，请参见 link:../get-started/requirements.html["Astra 控制中心要求"]。
+
+
+
+== 使用某些Snapshot控制器版本的Kubernetes 1.25或更高版本集群的快照可能会失败
+
+如果在运行1.25或更高版本的Kubernetes集群上安装了v1beta1版本的快照控制器API、则该集群的快照可能会失败。
+
+作为临时解决策 、在升级现有Kubernetes 1.25或更高版本的安装时、请执行以下操作：
+
+. 删除任何现有的Snapshot CRD和任何现有的Snapshot控制器。
+. https://docs.netapp.com/us-en/trident/trident-managing-k8s/uninstall-trident.html["卸载 Astra Trident"^]。
+. https://docs.netapp.com/us-en/trident/trident-use/vol-snapshots.html#deploying-a-volume-snapshot-controller["安装快照CRD和快照控制器"^]。
+. https://docs.netapp.com/us-en/trident/trident-get-started/kubernetes-deploy.html["安装最新版本的Astra Trdent"^]。
+. https://docs.netapp.com/us-en/trident/trident-use/vol-snapshots.html#step-1-create-a-volumesnapshotclass["创建卷快照类"^]。
+
+
+
+
+== 删除 Astra Control Center 实例期间，备份和快照可能不会保留
+
+如果您拥有评估许可证，请务必存储帐户 ID ，以避免在未发送 ASUP 的情况下 Astra 控制中心出现故障时丢失数据。
+
+
+
+== LDAP用户和组限制
+
+Astra控制中心最多支持5、000个远程组和10、000个远程用户。
+
+如果某个LDAP实体(用户或组)的DN包含一个RDN、并且该RDN带有尾随空格、则Astra Control不支持该实体。
+
+
+
+== Astra 控制中心中的 S3 存储分段不会报告可用容量
+
+在备份或克隆由 Astra 控制中心管理的应用程序之前，请检查 ONTAP 或 StorageGRID 管理系统中的存储分段信息。
+
+
+
+== Astra 控制中心不会验证您为代理服务器输入的详细信息
+
+请确保您的安全 link:../use/monitor-protect.html#add-a-proxy-server["输入正确的值"] 建立连接时。
+
+
+
+== 与 Postgres Pod 的现有连接导致故障
+
+在 Postgres Pod 上执行操作时，不应直接在 Pod 中连接以使用 psql 命令。Astra Control 需要使用 psql 访问权限来冻结和解冻数据库。如果已建立连接，则快照，备份或克隆将失败。
+
+
+
+== "Activity"页面最多可显示100000个事件
+
+Astra Control Activity页面最多可显示100、000个事件。要查看所有记录的事件、请使用检索这些事件 link:../rest-api/api-intro.html["Astra Control API"^]。
+
+
+
+== SnapMirror不支持将基于TCP的NVMe用于存储后端的应用程序
+
+对于使用基于TCP协议的NVMe的存储后端、Astra控制中心不支持NetApp SnapMirror复制。
+
+
+
+== 了解更多信息
+
+* link:../release-notes/known-issues.html["已知问题"]
+

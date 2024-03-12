@@ -1,0 +1,175 @@
+= 功能
+:allow-uri-read: 
+
+
+
+
+== 功能
+
+Astra Control 为 Kubernetes 应用程序数据生命周期管理提供了关键功能：
+
+* 自动管理永久性存储
+* 创建应用程序感知型按需快照和备份
+* 自动执行策略驱动的快照和备份操作
+* 将应用程序和数据从一个 Kubernetes 集群迁移到另一个集群
+* 使用NetApp SnapMirror技术(Astra Control Center)将应用程序复制到远程系统
+* 将应用程序从暂存克隆到生产
+* 直观显示应用程序运行状况和保护状态
+* 使用Web UI或API实施备份和迁移工作流
+
+
+
+
+== 部署模式
+
+Astra Control 有两种部署模式：
+
+* * Astra Control Service*：NetApp管理的服务、可为多个云提供商环境中的Kubernetes集群以及自管理Kubernetes集群提供应用程序感知型数据管理。
+* * Astra Control Center* ：自管理软件，可为内部环境中运行的 Kubernetes 集群提供应用程序感知型数据管理。Astra控制中心还可以安装在具有NetApp Cloud Volumes ONTAP存储后端的多个云提供商环境中。
+
+
+[cols="1h,2d,2a"]
+|===
+|  | Astra 控制服务 | Astra 控制中心 
+
+
+| 如何提供？ | 作为 NetApp 提供的一项完全托管的云服务  a| 
+作为可下载、安装和管理的软件
+
+
+
+| 它托管在何处？ | 基于 NetApp 选择的公有云  a| 
+在您自己的Kubernetes集群上
+
+
+
+| 如何更新？ | 由 NetApp 管理  a| 
+您可以管理任何更新
+
+
+
+| 支持哪些存储后端？  a| 
+* Amazon Web Services：
++
+** Amazon EBS
+** 适用于 NetApp ONTAP 的 Amazon FSX
+** https://docs.netapp.com/us-en/cloud-manager-cloud-volumes-ontap/task-getting-started-gcp.html["Cloud Volumes ONTAP"^]
+
+
+* Google Cloud
++
+** Google 持久磁盘
+** NetApp Cloud Volumes Service
+** https://docs.netapp.com/us-en/cloud-manager-cloud-volumes-ontap/task-getting-started-gcp.html["Cloud Volumes ONTAP"^]
+
+
+* Microsoft Azure
++
+** Azure受管磁盘
+** Azure NetApp Files
+** https://docs.netapp.com/us-en/cloud-manager-cloud-volumes-ontap/task-getting-started-azure.html["Cloud Volumes ONTAP"^]
+
+
+* 自管理集群：
++
+** Amazon EBS
+** Azure受管磁盘
+** Google 持久磁盘
+** https://docs.netapp.com/us-en/cloud-manager-cloud-volumes-ontap/["Cloud Volumes ONTAP"^]
+** NetApp MetroCluster
+** https://longhorn.io/["Longhorn"^]
+
+
+* 内部部署集群：
++
+** NetApp MetroCluster
+** NetApp ONTAP AFF 和 FAS 系统
+** NetApp ONTAP Select
+** https://docs.netapp.com/us-en/cloud-manager-cloud-volumes-ontap/["Cloud Volumes ONTAP"^]
+** https://longhorn.io/["Longhorn"^]
+
+
+
+ a| 
+* NetApp ONTAP AFF 和 FAS 系统
+* NetApp ONTAP Select
+* https://docs.netapp.com/us-en/cloud-manager-cloud-volumes-ontap/["Cloud Volumes ONTAP"^]
+
+
+|===
+
+
+== Astra 控制服务的工作原理
+
+Astra Control Service 是一种由 NetApp 管理的云服务，它始终处于启用状态，并使用最新功能进行更新。它利用多个组件实现应用程序数据生命周期管理。
+
+从较高的层面来看， Astra Control Service 的工作原理如下：
+
+* 您可以通过设置云提供商并注册 Astra 帐户开始使用 Astra Control Service 。
++
+** 对于 GKE- 集群， Astra Control Service 使用 https://cloud.netapp.com/cloud-volumes-service-for-gcp["适用于 Google Cloud 的 NetApp Cloud Volumes Service"^] 或 Google Persistent Disk 作为永久性卷的存储后端。
+** 对于 AKS 集群， Astra Control Service 使用 https://cloud.netapp.com/azure-netapp-files["Azure NetApp Files"^] 或Azure受管磁盘作为永久性卷的存储后端。
+** 对于Amazon EKS集群、Astra Control Service使用 https://docs.aws.amazon.com/ebs/["Amazon Elastic Block Store"^] 或 https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/what-is-fsx-ontap.html["适用于 NetApp ONTAP 的 Amazon FSX"^] 作为永久性卷的存储后端。
+
+
+* 您可以将第一个 Kubernetes 计算添加到 Astra Control Service 中。然后， Astra 控制服务将执行以下操作：
++
+** 在云提供商帐户中创建一个对象存储，该帐户是备份副本的存储位置。
++
+在 Azure 中， Astra Control Service 还会为 Blob 容器创建资源组，存储帐户和密钥。
+
+** 在集群上创建新的管理员角色和 Kubernetes 服务帐户。
+** 使用此新管理员角色进行安装 https://docs.netapp.com/us-en/trident/index.html["Astra Trident"^] 以创建一个或多个存储类。
+** 如果您使用NetApp云服务存储产品作为存储后端、则Astra Control Service将使用Astra Trident为应用程序配置永久性卷。如果您使用Amazon EBS或Azure托管磁盘作为存储后端、则需要安装特定于提供商的CSI驱动程序。中提供了安装说明 https://docs.netapp.com/us-en/astra-control-service/get-started/set-up-amazon-web-services.html["设置Amazon Web Services"^] 和 https://docs.netapp.com/us-en/astra-control-service/get-started/set-up-microsoft-azure-with-amd.html["使用 Azure 受管磁盘设置 Microsoft Azure"^]。
+
+
+* 此时，您可以向集群添加应用程序。将在新的默认存储类上配置永久性卷。
+* 然后，您可以使用 Astra Control Service 管理这些应用程序，并开始创建快照，备份和克隆。
+
+
+Astra Control的免费计划支持您管理帐户中多达10个命名空间。如果您要管理10个以上的计划、则需要通过从"免费计划"升级到"高级计划"来设置计费。
+
+
+
+== Astra 控制中心的工作原理
+
+Astra 控制中心在您自己的私有云中本地运行。
+
+Astra控制中心支持Kubnetes集群、其中包含基于Astra三端的存储类以及ONTAP 9.5及更高版本的存储后端。
+
+在云互联环境中， Astra 控制中心使用 Cloud Insights 提供高级监控和遥测功能。如果没有 Cloud Insights 连接，则 Astra 控制中心可提供有限的（ 7 天的指标）监控和遥测功能，并通过开放式指标端点导出到 Kubernetes 原生监控工具（例如 Prometheus 和 Grafana ）。
+
+Astra 控制中心完全集成到 AutoSupport 和 Active IQ 生态系统中，可为用户和 NetApp 支持提供故障排除和使用信息。
+
+您可以使用90天嵌入式评估许可证试用Astra Control Center。在评估Astra Control Center时、您可以通过电子邮件和社区选项获得支持。此外，您还可以从产品支持信息板访问知识库文章和文档。
+
+要安装和使用 Astra 控制中心，您需要满足特定的要求 https://docs.netapp.com/us-en/astra-control-center/get-started/requirements.html["要求"^]。
+
+从较高的层面来看， Astra 控制中心的工作原理如下：
+
+* 您可以在本地环境中安装 Astra Control Center 。详细了解如何操作 https://docs.netapp.com/us-en/astra-control-center/get-started/install_acc.html["安装 Astra 控制中心"^]。
+* 您可以完成一些设置任务，例如：
++
+** 设置许可
+** 添加第一个集群。
+** 添加在添加集群时发现的存储后端。
+** 添加用于存储应用程序备份的对象存储分段。
+
+
+
+
+详细了解如何操作 https://docs.netapp.com/us-en/astra-control-center/get-started/setup_overview.html["设置 Astra 控制中心"^]。
+
+您可以将应用程序添加到集群中。或者、如果要管理的集群中已有一些应用程序、则可以使用Astra控制中心对其进行管理。然后、使用Astra控制中心创建快照、备份、克隆和复制关系。
+
+
+
+== 有关详细信息 ...
+
+* https://docs.netapp.com/us-en/astra/index.html["Astra Control Service 文档"^]
+* https://docs.netapp.com/us-en/astra-control-center/index.html["Astra 控制中心文档"^]
+* https://docs.netapp.com/us-en/trident/index.html["Astra Trident 文档"^]
+* https://docs.netapp.com/us-en/astra-automation["Astra Control API文档"^]
+* https://docs.netapp.com/us-en/cloudinsights/["Cloud Insights 文档"^]
+* https://docs.netapp.com/us-en/ontap/index.html["ONTAP 文档"^]
+

@@ -1,0 +1,28 @@
+---
+section: get-started
+title: 入门
+entries:
+- title: 了解 Astra 控制中心
+  url: "/get-started/intro.html"
+- title: Astra 控制中心要求
+  url: "/get-started/requirements.html"
+- title: Astra 控制中心快速入门
+  url: "/get-started/quick-start.html"
+- title: 安装概述
+  url: "/get-started/install_overview.html"
+  entries:
+  - title: 安装 Astra 控制中心
+    url: "/get-started/install_acc.html"
+    entries:
+    - title: 配置外部证书管理器
+      url: "/get-started/cert-manager-prereqs.html"
+  - title: 使用 OpenShift OperatorHub 安装 Astra 控制中心
+    url: "/get-started/acc_operatorhub_install.html"
+  - title: 使用 Cloud Volumes ONTAP 存储后端安装 Astra 控制中心
+    url: "/get-started/install_acc-cvo.html"
+  - title: 安装后配置Astra控制中心
+    url: "/get-started/configure-after-install.html"
+- title: 设置 Astra 控制中心
+  url: "/get-started/setup_overview.html"
+- title: 常见问题解答
+  url: "/get-started/faq.html"

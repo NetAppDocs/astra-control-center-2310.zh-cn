@@ -487,6 +487,18 @@ spec:
   accountName: "Example"
   *astraVersion: "[Version number]"*
 ----
+. 更改Astra版本号 (`astraVersion` 在中 `spec`) `23.07.0` to `23.10.0`：
++
+
+NOTE: 您不能直接从比当前版本落后两个或更多版本的版本升级。有关已发布版本的完整列表、请参见 link:../release-notes/whats-new.html["发行说明"]。
+
++
+[listing, subs="+quotes"]
+----
+spec:
+  accountName: "Example"
+  *astraVersion: "[Version number]"*
+----
 . 验证您的映像注册表路径是否与您在中将映像推送到的注册表路径匹配 <<将映像添加到本地注册表,上一步>>。更新 `imageRegistry` 在中 `spec` 注册表自上次安装以来是否发生了更改。
 +
 [listing]

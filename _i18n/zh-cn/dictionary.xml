@@ -78,7 +78,6 @@
   <block id="35f3a2f7a0f2c01d03afedb95ece66ab" category="inline-link">NetApp 身份验证文件上传（需要登录）</block>
   <block id="1c2989d4329c8aeec5e01506816fb04e" category="list-text">使用 ...<block ref="4b0bc63f683ccbf4dcf0ba2a6a1b561f" category="inline-link-rx"></block>。</block>
   <block id="94bcffc8ff8a109a8267202d2aaa5526" category="list-text">将捆绑包直接附加到 NSS 上的案例。</block>
-  <block id="4345f2150d39e38a6a11ee7ee57bed28" category="list-text">使用 NetApp Active IQ 。</block>
   <block id="5220375a520b7758aa31b8b43ce717fe" category="summary">Astra Control配置程序支持在源卷和目标卷之间创建镜像关系、以复制卷以实现灾难恢复。</block>
   <block id="50e2eea9ba53d70147772db1c5d25f79" category="doc">使用SnapMirror复制卷</block>
   <block id="d0182feabbbe0987e5c6aed407b4c2a7" category="paragraph">您可以使用Astra Control配置程序在一个集群上的源卷和对等集群上的目标卷之间创建镜像关系、以便为灾难恢复复制数据。您可以使用具有名称流的自定义资源定义(CRD)执行以下操作：</block>
@@ -395,7 +394,6 @@
   <block id="90d397f2aa31c2e6d9f5dfda5d12adca" category="paragraph">Astra 控制中心在您自己的私有云中本地运行。</block>
   <block id="95936e8fb1e1f6bf4c0671f4ccc84fe7" category="paragraph">Astra控制中心支持Kubnetes集群、其中包含基于Astra三端的存储类以及ONTAP 9.5及更高版本的存储后端。</block>
   <block id="51269e2584d26b04961877ec77db6da7" category="paragraph">在云互联环境中， Astra 控制中心使用 Cloud Insights 提供高级监控和遥测功能。如果没有 Cloud Insights 连接，则 Astra 控制中心可提供有限的（ 7 天的指标）监控和遥测功能，并通过开放式指标端点导出到 Kubernetes 原生监控工具（例如 Prometheus 和 Grafana ）。</block>
-  <block id="ea2708b459fc0cad6936ec216bd9405e" category="paragraph">Astra 控制中心完全集成到 AutoSupport 和 Active IQ 生态系统中，可为用户和 NetApp 支持提供故障排除和使用信息。</block>
   <block id="e4a6d61b6602f5e6d6468645b096f45e" category="paragraph">您可以使用90天嵌入式评估许可证试用Astra Control Center。在评估Astra Control Center时、您可以通过电子邮件和社区选项获得支持。此外，您还可以从产品支持信息板访问知识库文章和文档。</block>
   <block id="b4851e92b19af0c5c82447fc0937709d" category="inline-link">要求</block>
   <block id="ebd65e27e034512530c808d2d0aa364d" category="paragraph">要安装和使用 Astra 控制中心，您需要满足特定的要求<block ref="0a14e0fc52cf8d6c6274f9c6e777d67d" category="inline-link-rx"></block>。</block>
@@ -1765,7 +1763,6 @@
   <block id="6d55356ca8cb9b27cfa6e2bb46ebb089" category="example-title">响应示例：</block>
   <block id="3287973c50b09462bde24fe82b06c59b" category="list-text">验证Pod是否正在运行：</block>
   <block id="49442a4bf304a6a24081fc054a06ba5e" category="list-text">编辑Astra Control Center自定义资源(CR)：</block>
-  <block id="4bc1d1c42f12d420fb373e1a8d345a2d" category="list-text">更改Astra版本号 <block ref="bbdbf70444e48a34a4a7e7d708d85eec" prefix="(" category="inline-code"></block> 在中<block ref="b979c2934ac0b4ba3f08dabfdd1b2299" prefix=" " category="inline-code"></block>)升级到要升级到的版本：</block>
   <block id="41ff704de5d4377c40831a45f37b2f9c" category="list-text">验证您的映像注册表路径是否与您在中将映像推送到的注册表路径匹配 <block ref="7fe0e1ddcc2917e6a216033278119235" category="inline-xref-macro-rx"></block>。更新<block ref="990dc1a09e10c7b5378e6bc8a1956cb8" prefix=" " category="inline-code"></block> 在中<block ref="b979c2934ac0b4ba3f08dabfdd1b2299" prefix=" " category="inline-code"></block> 注册表自上次安装以来是否发生了更改。</block>
   <block id="0721a4ab2e84ecf070923858d32930ec" category="list-text">将以下内容添加到<block ref="c16ae51f09d668b952e5ab23072ad64e" prefix=" " category="inline-code"></block> 中的配置<block ref="b979c2934ac0b4ba3f08dabfdd1b2299" prefix=" " category="inline-code"></block>：</block>
   <block id="0f04760e138c3f7be6f489f1347dbf8c" category="list-text">在中添加以下行<block ref="9848fd54a26db3cbb32026fac4aa182a" prefix=" " category="inline-code"></block> 在中<block ref="b979c2934ac0b4ba3f08dabfdd1b2299" prefix=" " category="inline-code"></block> 在Astra控制中心CR中：</block>
@@ -2503,7 +2500,6 @@ Astra Control现在可以管理由使用NVMe/TCP连接的永久性卷提供支�
 注意：请勿使用<block ref="dbd7790bcd23fde7607101ef6a633779" prefix=" " category="inline-code"></block> 或<block ref="f8eae6750519389e078e1eb1bcb3d708" prefix=" " category="inline-code"></block> 地址中。复制此 FQDN 以在中使用 <block ref="39c8566ec35b62823c898c5e38a4b78c" category="inline-xref-macro-rx"></block>。</block>
   <block id="a35d697fca562fcd8adcc6a07880b3d5" category="cell"><block ref="51c3153f8b9ad8f3a27b28d6c8f95aab" prefix="" category="inline-code"></block></block>
   <block id="16655bd6caa78814980ce90854a07356" category="example-title">&lt;code&gt;autoSupport&lt;/code&gt;</block>
-  <block id="7548d8cfdbba865da930704f30a7542f" category="paragraph">您在本节中的选择将决定您是否要参与NetApp主动支持应用程序NetApp Active IQ 以及数据的发送位置。需要互联网连接(端口442)、所有支持数据均会匿名化。</block>
   <block id="ad8783089f828b927473fb61d51940ec" category="cell">使用 ...</block>
   <block id="60d9e21a93c21f0d9ec8e72e12270054" category="cell"><block ref="774a4ec4adf9dd65264c77b3b87833b7" prefix="" category="inline-code"></block></block>
   <block id="24b6133a8f6f0866838539b9ca41cfa7" category="cell">两者之一<block ref="ff7af27948b380bff5d583359796d3c8" prefix=" " category="inline-code"></block> 或<block ref="572d4e421e5e6b9bc11d815e8a027112" prefix=" " category="inline-code"></block> 必须选择字段</block>
@@ -3528,4 +3524,7 @@ Asta三项功能会在导入和发现过程中自动安装。</block>
   <block id="1fe917b01f9a3f87fa2d7d3b7643fac1" category="sidebar">常见问题解答</block>
   <block id="424ceef1136fb58527f241d7cdf1c5e9" category="list-text">更改Astra版本号 <block ref="bbdbf70444e48a34a4a7e7d708d85eec" prefix="(" category="inline-code"></block> 在中<block ref="b979c2934ac0b4ba3f08dabfdd1b2299" prefix=" " category="inline-code"></block>)<block ref="e43c70c154432522a389a51dc9db6b94" prefix=" " category="inline-code"></block> to<block ref="84976609aebb6439476255d5ef8280bb" prefix=" " category="inline-code"></block>：</block>
   <block id="7f8303559ee1d0bdcb1d09fd27feaa43" category="admonition">您不能直接从比当前版本落后两个或更多版本的版本升级。有关已发布版本的完整列表、请参见 <block ref="6828c83fc2e1f023c92b48e8acd1d196" category="inline-link-macro-rx"></block>。</block>
+  <block id="a9cf730f8ab04a5b52f1d19c74c1483c" category="paragraph">Astra控制中心完全集成到AutoSupport和Active IQ数字顾问(也称为数字顾问)生态系统中、可为用户和NetApp支持提供故障排除和使用信息。</block>
+  <block id="d89b38e0f587f8fa359a431abd35bb40" category="paragraph">您在本节中所做的选择将决定您是否参与NetApp的主动支持应用程序Digital Advisor以及数据的发送位置。需要互联网连接(端口442)、所有支持数据均会匿名化。</block>
+  <block id="3cf9bc07c0ae31018d3336b8f32de6c8" category="list-text">使用Digital Advisor。</block>
 </blocks>

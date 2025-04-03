@@ -2426,7 +2426,6 @@ Astra Control现在可以管理由使用NVMe/TCP连接的永久性卷提供支�
   <block id="7c90d436f62a080a98e02874957865e0" category="inline-link-macro">这些过程</block>
   <block id="41bdd90cead20f2dddf0647e2f48fc13" category="list-text">*使用Cloud Volumes ONTAP 后端在公有 云中安装*：使用 <block ref="cdbba4f6294205e74dc04d0ee99d1d1f" category="inline-link-macro-rx"></block> 在带有Cloud Volumes ONTAP 存储后端的Amazon Web Services (AWS)、Google云平台(GCP)或Microsoft Azure中安装Astra控制中心。</block>
   <block id="201e09e85ad81db8a19ef9f20c05d1a5" category="inline-link">此视频</block>
-  <block id="259f3be9b6c8eefb44e844c2b70333dc" category="paragraph">有关Astra控制中心安装过程的演示、请参见<block ref="cbbdec23221803dc148346abe5a297c0" category="inline-link-rx"></block>。</block>
   <block id="2b305f607904d67cd2da521366334e8c" category="inline-link-macro">开始安装之前，请为 Astra Control Center 部署准备您的环境</block>
   <block id="748a7a1711b184c4e02102a84264406d" category="list-text">*满足环境前提条件*： <block ref="689b20f2e0a9cb0a12bc48475b3f81ee" category="inline-link-macro-rx"></block>。</block>
   <block id="f96c06e8efd6770cb5f76e8c3aa4238f" category="admonition">在第三个容错域或二级站点中部署A作用 力控制中心。对于应用程序复制和无缝灾难恢复、建议执行此操作。</block>
@@ -3527,4 +3526,5 @@ Asta三项功能会在导入和发现过程中自动安装。</block>
   <block id="a9cf730f8ab04a5b52f1d19c74c1483c" category="paragraph">Astra控制中心完全集成到AutoSupport和Active IQ数字顾问(也称为数字顾问)生态系统中、可为用户和NetApp支持提供故障排除和使用信息。</block>
   <block id="d89b38e0f587f8fa359a431abd35bb40" category="paragraph">您在本节中所做的选择将决定您是否参与NetApp的主动支持应用程序Digital Advisor以及数据的发送位置。需要互联网连接(端口442)、所有支持数据均会匿名化。</block>
   <block id="3cf9bc07c0ae31018d3336b8f32de6c8" category="list-text">使用Digital Advisor。</block>
+  <block id="285c7fb54a928cf8e9ca78a83740ce60" category="paragraph">有关Asta Control Center安装过程的演示，请参见<block ref="d97427b76746d487a682c110ed41c817" category="inline-link-rx"></block>。</block>
 </blocks>
